@@ -1,9 +1,7 @@
 import logging
 import os
-import subprocess
 import threading
 import time
-import platform
 
 import readchar
 from dotenv import load_dotenv
@@ -13,6 +11,8 @@ from rich.console import Console
 from rich.live import Live
 from rich.logging import RichHandler
 from rich.panel import Panel
+
+from stop import stop_server
 
 load_dotenv()
 SERVER_IP = os.getenv('SERVER_IP', '127.0.0.1')
@@ -61,38 +61,6 @@ def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Pan
         title="[bold green]Minecraft Bedrock Monitor",
         expand=True
     )
-
-
-def stop_server(shutdown: bool = True):
-    logger.info("Stopping server...")
-    subprocess.run(['docker', 'compose', 'stop'], check=True)
-
-    logger.info("Waiting for server to stop...")
-    while True:
-        result = subprocess.run(
-            ["docker", "container", "ps", "-q"],
-            capture_output=True, text=True
-        )
-        if result.stdout.strip() == "":
-            break
-        time.sleep(1)
-
-    logger.info("Server stopped.")
-
-    if not shutdown:
-        return
-
-    logger.info("Shutting down the machine...")
-
-    system = platform.system()
-
-    if system == 'Windows':
-        subprocess.run(['shutdown', '/s', '/t', '0'])
-    elif system == 'Linux' or system == 'Darwin':
-        subprocess.run(['shutdown', 'now'])
-    else:
-        logger.error(f"Unsupported OS: {system}")
-        return
 
 
 def main():
