@@ -1,5 +1,7 @@
+import argparse
 import logging
 import os
+import socket
 import threading
 import time
 
@@ -47,10 +49,11 @@ def listen_for_stop(stop_event: threading.Event):
 
 def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Panel:
     content = (
-        f'Server: {SERVER_IP}:{SERVER_PORT}\n'
-        f'Players: {online}/{maxp}\n'
-        f'Latency: {latency:.0f} ms\n'
-        f'Idle Time: {idle} s'
+        f'Server      : {SERVER_IP}:{SERVER_PORT}\n'
+        f'Players     : {online}/{maxp}\n'
+        f'Latency     : {latency:.0f} ms\n'
+        f'Idle Time   : {idle} s\n'
+        f'Time Checked: {time.strftime("%m-%d-%Y %H:%M:%S", time.localtime())}'
     )
     return Panel(
         Align.center(content),
@@ -62,10 +65,21 @@ def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Pan
 def main():
     time_since_last_player = 0
 
+    parser = argparse.ArgumentParser(description='Monitor a Minecraft Bedrock server.')
+    parser.add_argument(
+        '--automatic-shutdown', action='store_true',
+        help='Enable automatic shutdown if server is empty.'
+    )
+
+    args = parser.parse_args()
+    do_shutdown = args.automatic_shutdown
+
     stop_event = threading.Event()
 
     listener_thread = threading.Thread(target=listen_for_stop, args=(stop_event,), daemon=True)
     listener_thread.start()
+
+    local_network_ip = socket.gethostbyname(socket.gethostname())
 
     console.print(
         f'Monitoring Minecraft Bedrock server at [bold cyan]{SERVER_IP}:{SERVER_PORT}[/]',
@@ -73,6 +87,10 @@ def main():
     )
     console.print(
         f'It will shutdown if empty for more than {SERVER_TIMEOUT} seconds, or when you press \'q\'.',
+        justify='center'
+    )
+    console.print(
+        f'Local Network Address: [bold yellow]{local_network_ip}:{SERVER_PORT}[/]',
         justify='center'
     )
 
@@ -94,8 +112,6 @@ def main():
             if online == 0:
                 time_since_last_player += CHECK_INTERVAL
             else:
-                if time_since_last_player > 0:
-                    logger.info('Player(s) joined, resetting idle timer.')
                 time_since_last_player = 0
 
             if time_since_last_player >= SERVER_TIMEOUT > 0:
@@ -105,7 +121,7 @@ def main():
 
             time.sleep(CHECK_INTERVAL)
 
-    stop_server()
+    stop_server(do_shutdown)
 
 
 if __name__ == '__main__':
