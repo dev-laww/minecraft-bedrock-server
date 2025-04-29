@@ -1,0 +1,20 @@
+services:
+    bds:
+        container_name: bds
+        image: itzg/minecraft-bedrock-server
+        env_file:
+            - .env.server
+        ports:
+            - '19132:19132/udp'
+        volumes:
+            - ./data:/data
+        stdin_open: true
+        tty: true
+        restart: unless-stopped
+    playit:
+        container_name: playit
+        image: ghcr.io/playit-cloud/playit-agent:0.15
+        network_mode: host
+        env_file:
+            - .env.playit
+        restart: unless-stopped
