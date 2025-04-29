@@ -13,12 +13,14 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from stop import stop_server
+from utils import convert_to_seconds
 
 load_dotenv()
 SERVER_IP = os.getenv('SERVER_IP', '127.0.0.1')
 SERVER_PORT = os.getenv('SERVER_PORT', '19132')
-CHECK_INTERVAL = os.getenv('CHECK_INTERVAL', 1)
-SERVER_TIMEOUT = os.getenv('SERVER_TIMEOUT', 60)
+CHECK_INTERVAL = convert_to_seconds(os.getenv('CHECK_INTERVAL', '5s'))
+timeout = os.getenv('SERVER_TIMEOUT', 'off')
+SERVER_TIMEOUT = convert_to_seconds(timeout) if timeout != 'off' else 0
 
 logging.basicConfig(
     level=logging.INFO,
@@ -96,7 +98,7 @@ def main():
                     logger.info('Player(s) joined, resetting idle timer.')
                 time_since_last_player = 0
 
-            if time_since_last_player >= SERVER_TIMEOUT:
+            if time_since_last_player >= SERVER_TIMEOUT > 0:
                 logger.warning('No players for too long, initiating shutdown...')
                 stop_event.set()
                 break
