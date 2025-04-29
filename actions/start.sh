@@ -17,9 +17,6 @@ while ! docker container ps -q | grep -q .; do
     sleep 1
 done
 
-echo "Containers started successfully. Sleeping for 60 seconds to allow them to initialize..."
-sleep 60
-
 AUTOMATIC_SHUTDOWN=""
 
 while [[ $# -gt 0 ]]; do
@@ -34,4 +31,4 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-python scripts/monitor.py $AUTOMATIC_SHUTDOWN
+poetry run python scripts/monitor.py $AUTOMATIC_SHUTDOWN
