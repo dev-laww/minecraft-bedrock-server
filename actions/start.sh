@@ -12,3 +12,14 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 docker compose up -d
+
+# wait for the containers to start
+while ! docker container ps -q | grep -q .; do
+    sleep 1
+done
+
+echo "Containers started successfully. Sleeping for 60 seconds to allow them to initialize..."
+
+sleep 60
+
+python scripts/monitor.py

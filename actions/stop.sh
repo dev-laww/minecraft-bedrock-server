@@ -8,6 +8,6 @@ done
 
 # shut down machine
 
-echo "Shutting down the machine..."
-
-powershell Stop-Computer -Force
+#echo "Shutting down the machine..."
+#
+#powershell Stop-Computer -Force
