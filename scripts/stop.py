@@ -7,33 +7,33 @@ from rich.logging import RichHandler
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(message)s",
-    datefmt="%H:%M:%S",
+    format='%(message)s',
+    datefmt='%H:%M:%S',
     handlers=[RichHandler()]
 )
 logger = logging.getLogger('minecraft-monitor')
 
 
 def stop_server(shutdown: bool = True):
-    logger.info("Stopping server...")
+    logger.info('Stopping server...')
     subprocess.run(['docker', 'compose', 'stop'], check=True)
 
-    logger.info("Waiting for server to stop...")
+    logger.info('Waiting for server to stop...')
     while True:
         result = subprocess.run(
-            ["docker", "container", "ps", "-q"],
+            ['docker', 'container', 'ps', '-q'],
             capture_output=True, text=True
         )
-        if result.stdout.strip() == "":
+        if result.stdout.strip() == '':
             break
         time.sleep(1)
 
-    logger.info("Server stopped.")
+    logger.info('Server stopped.')
 
     if not shutdown:
         return
 
-    logger.info("Shutting down the machine...")
+    logger.info('Shutting down the machine...')
 
     system = platform.system()
 
@@ -42,7 +42,7 @@ def stop_server(shutdown: bool = True):
     elif system == 'Linux' or system == 'Darwin':
         subprocess.run(['shutdown', 'now'])
     else:
-        logger.error(f"Unsupported OS: {system}")
+        logger.error(f'Unsupported OS: {system}')
         return
 
 
@@ -50,5 +50,5 @@ def main():
     stop_server()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

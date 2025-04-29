@@ -22,43 +22,37 @@ SERVER_TIMEOUT = os.getenv('SERVER_TIMEOUT', 60)
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(message)s",
-    datefmt="%H:%M:%S",
+    format='%(message)s',
+    datefmt='%H:%M:%S',
     handlers=[RichHandler()]
 )
 logger = logging.getLogger('minecraft-monitor')
 console = Console()
 
-server = BedrockServer.lookup(f"{SERVER_IP}:{SERVER_PORT}")
+server = BedrockServer.lookup(f'{SERVER_IP}:{SERVER_PORT}')
 
 
 def listen_for_stop(stop_event: threading.Event):
-    """
-    Listen for the 'q' key to be pressed to trigger a manual stop.
-    """
     while not stop_event.is_set():
         ch = readchar.readchar()
 
         if ch != 'q':
             continue
 
-        logger.info("Manual shutdown requested.")
+        logger.info('Manual shutdown requested.')
         stop_event.set()
 
 
 def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Panel:
-    """
-    Build a Rich Panel with centered server status details.
-    """
     content = (
-        f"Server: {SERVER_IP}:{SERVER_PORT}\n"
-        f"Players: {online}/{maxp}\n"
-        f"Latency: {latency:.0f} ms\n"
-        f"Idle Time: {idle} s"
+        f'Server: {SERVER_IP}:{SERVER_PORT}\n'
+        f'Players: {online}/{maxp}\n'
+        f'Latency: {latency:.0f} ms\n'
+        f'Idle Time: {idle} s'
     )
     return Panel(
         Align.center(content),
-        title="[bold green]Minecraft Bedrock Monitor",
+        title='[bold green]Minecraft Bedrock Monitor',
         expand=True
     )
 
@@ -72,12 +66,12 @@ def main():
     listener_thread.start()
 
     console.print(
-        f"Monitoring Minecraft Bedrock server at [bold cyan]{SERVER_IP}:{SERVER_PORT}[/]",
-        justify="center"
+        f'Monitoring Minecraft Bedrock server at [bold cyan]{SERVER_IP}:{SERVER_PORT}[/]',
+        justify='center'
     )
     console.print(
-        f"It will shutdown if empty for more than {SERVER_TIMEOUT} seconds, or when you press 'q'.",
-        justify="center"
+        f'It will shutdown if empty for more than {SERVER_TIMEOUT} seconds, or when you press \'q\'.',
+        justify='center'
     )
 
     with Live(console=console, refresh_per_second=4) as live:
@@ -85,7 +79,7 @@ def main():
             try:
                 status = server.status()
             except Exception as e:
-                logger.error(f"Failed to query server status: {e}")
+                logger.error(f'Failed to query server status: {e}')
                 time.sleep(CHECK_INTERVAL)
                 continue
 
@@ -99,11 +93,11 @@ def main():
                 time_since_last_player += CHECK_INTERVAL
             else:
                 if time_since_last_player > 0:
-                    logger.info("Player(s) joined, resetting idle timer.")
+                    logger.info('Player(s) joined, resetting idle timer.')
                 time_since_last_player = 0
 
             if time_since_last_player >= SERVER_TIMEOUT:
-                logger.warning("No players for too long, initiating shutdown...")
+                logger.warning('No players for too long, initiating shutdown...')
                 stop_event.set()
                 break
 
@@ -112,5 +106,5 @@ def main():
     stop_server()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
