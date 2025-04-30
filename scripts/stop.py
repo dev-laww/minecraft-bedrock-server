@@ -5,6 +5,8 @@ import time
 
 from rich.logging import RichHandler
 
+from backup import create_backup
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(message)s',
@@ -29,6 +31,9 @@ def stop_server(shutdown: bool = True):
         time.sleep(1)
 
     logger.info('Server stopped.')
+    logger.info('Backing up world...')
+    create_backup()
+    logger.info('Backup completed.')
 
     if not shutdown:
         return

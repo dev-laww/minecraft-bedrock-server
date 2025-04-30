@@ -17,6 +17,7 @@ from rich.live import Live
 from rich.logging import RichHandler
 from rich.panel import Panel
 
+from backup import BACKUP_DIR, backup_every_interval, create_backup
 from stop import stop_server
 from utils import convert_to_seconds
 
@@ -26,6 +27,7 @@ SERVER_PORT = os.getenv('SERVER_PORT', '19132')
 CHECK_INTERVAL = convert_to_seconds(os.getenv('CHECK_INTERVAL', '5s'))
 timeout = os.getenv('SERVER_TIMEOUT', 'off')
 SERVER_TIMEOUT = convert_to_seconds(timeout) if timeout != 'off' else 0
+BACKUP_INTERVAL = convert_to_seconds(os.getenv('BACKUP_INTERVAL', '1h'))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -64,11 +66,16 @@ def stream_compose_logs(logs_buffer: deque, stop_event: threading.Event):
 
 
 def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Panel:
+    last_backup = max(BACKUP_DIR.glob('*.mcworld'), key=os.path.getctime)
+    last_backup_time = time.localtime(os.path.getctime(last_backup))
+    last_backup_str = time.strftime('%m-%d-%Y %H:%M:%S', last_backup_time) if last_backup else 'N/A'
+
     content = (
         f'Players     : {online}/{maxp}\n'
         f'Latency     : {latency:.0f} ms\n'
         f'Idle Time   : {idle} s\n'
-        f'Time Checked: {time.strftime("%m-%d-%Y %H:%M:%S", time.localtime())}'
+        f'Time Checked: {time.strftime("%m-%d-%Y %H:%M:%S", time.localtime())}\n'
+        f'Last Backup : {last_backup_str}\n'
     )
     return Panel(
         Align.center(content),
@@ -78,7 +85,7 @@ def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Pan
 
 
 def build_logs_panel(logs: deque) -> Panel:
-    available_space = console.size.height - 11
+    available_space = console.size.height - 12
     tail = list(logs)[-available_space:]
     content = '\n'.join(tail)
     return Panel(
@@ -113,6 +120,13 @@ def main():
     )
     log_thread.start()
 
+    backup_thread = threading.Thread(
+        target=backup_every_interval,
+        args=(BACKUP_INTERVAL, stop_event),
+        daemon=True
+    )
+    backup_thread.start()
+
     text = [
         Align.center(f'Monitoring Minecraft Bedrock server at [bold cyan]{SERVER_IP}:{SERVER_PORT}[/]'),
         Align.center(f'It will shutdown if empty for more than {timeout}, or when you press \'q\'.'),
@@ -122,17 +136,33 @@ def main():
     layout = Layout()
     layout.split_column(
         Layout(Group(*text), name='header', size=3),
-        Layout(name='status', size=6),
-        Layout(name='logs'),
+        Layout(
+            Panel(
+                Align.center(
+                    'Loading...',
+                    style='yellow',
+                    vertical='middle'),
+                title='[bold green]Server Status[/]'
+            ), name='status', size=7
+        ),
+        Layout(
+            Panel(
+                Align.center(
+                    'Loading logs...',
+                    style='yellow',
+                    vertical='middle'
+                ),
+                title='[bold green]Server Logs[/]'
+            ), name='logs'
+        )
     )
 
-    layout['status'].update(Panel(Align.center(
-        'Loading...',
+    layout['logs'].update(Panel(Align.center(
+        'Loading logs...',
         style='yellow',
         vertical='middle'),
-        title='[bold green]Server Status[/]')
+        title='[bold green]Server Logs[/]')
     )
-    layout['logs'].update(build_logs_panel(logs))
 
     with Live(layout, console=console, refresh_per_second=4):
         while not stop_event.is_set():
