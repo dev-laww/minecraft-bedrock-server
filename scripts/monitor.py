@@ -19,7 +19,7 @@ from rich.panel import Panel
 
 from backup import BACKUP_DIR, backup_every_interval, create_backup
 from stop import stop_server
-from utils import convert_to_seconds
+from utils import convert_to_seconds, convert_from_seconds
 
 load_dotenv()
 SERVER_IP = os.getenv('SERVER_IP', '127.0.0.1')
@@ -73,7 +73,7 @@ def build_status_panel(online: int, maxp: int, latency: float, idle: int) -> Pan
     content = (
         f'Players     : {online}/{maxp}\n'
         f'Latency     : {latency:.0f} ms\n'
-        f'Idle Time   : {idle} s\n'
+        f'Idle Time   : {convert_from_seconds(idle)}\n'
         f'Time Checked: {time.strftime("%m-%d-%Y %H:%M:%S", time.localtime())}\n'
         f'Last Backup : {last_backup_str}\n'
     )
