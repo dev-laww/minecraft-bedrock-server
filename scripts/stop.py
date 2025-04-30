@@ -38,7 +38,7 @@ def stop_server(shutdown: bool = True):
     system = platform.system()
 
     if system == 'Windows':
-        subprocess.run(['shutdown', '/s', '/t', '0'])
+        subprocess.run(['shutdown', '/s', '/f', '/t', '0'])
     elif system == 'Linux' or system == 'Darwin':
         subprocess.run(['shutdown', 'now'])
     else:
