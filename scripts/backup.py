@@ -27,3 +27,8 @@ def backup_every_interval(interval: int, stop_event: threading.Event):
     while not stop_event.is_set():
         create_backup()
         time.sleep(interval)
+
+
+if __name__ == '__main__':
+    create_backup()
+    print(f'Backup created at {BACKUP_DIR}')
